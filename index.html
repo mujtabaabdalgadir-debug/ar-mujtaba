@@ -44,19 +44,20 @@ h1{font-size:1.25rem;font-weight:800;text-align:center}
 
   <div id="sec-desktop" class="hidden" style="width:100%;text-align:center">
     <div class="steps">
-      <div class="step"><span>📱</span><span>يرجى فتح هذه الصفحة من هاتف أندرويد لتجربة الواقع المعزز.</span></div>
+      <div class="step"><span>📱</span><span>يرجى فتح الرابط من هاتف أندرويد لتجربة الواقع المعزز.</span></div>
     </div>
   </div>
 </div>
 
 <script>
+// تحديد نوع الجهاز
 const ua = navigator.userAgent;
 const isAndroid = /android/i.test(ua);
 const sec = isAndroid ? 'sec-android' : 'sec-desktop';
 document.getElementById(sec).classList.remove('hidden');
 
 function launchAR() {
-  // هذا السطر يولد رابط الملف تلقائياً بناءً على موقع الويب الحالي
+  // توليد رابط الملف من المسار الحالي للموقع بدلاً من الـ IP المحلي
   const currentPath = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
   const glbUrl = encodeURIComponent(currentPath + "scene.glb");
   
@@ -73,7 +74,9 @@ function launchAR() {
     "S.browser_fallback_url=" + fbUrl + ";" +
     "end;";
 
-  document.getElementById('status').textContent = 'جاري التشغيل...';
+  document.getElementById('status').textContent = 'جاري تشغيل الواقع المعزز...';
+  
+  // تشغيل رابط الـ Intent الخاص بجوجل
   window.location = intent;
 
   setTimeout(() => {
