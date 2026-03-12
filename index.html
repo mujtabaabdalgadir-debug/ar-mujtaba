@@ -1,88 +1,88 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-<title>Scene — AR التفاعلي</title>
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
-html,body{height:100%;background:#08080f;font-family:-apple-system,BlinkMacSystemFont,sans-serif;color:#fff}
-body{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;min-height:100dvh}
-.card{width:100%;max-width:380px;background:linear-gradient(145deg,#111120,#1a1a30);
-       border:1px solid rgba(255,255,255,.1);border-radius:24px;padding:28px 22px;
-       display:flex;flex-direction:column;align-items:center;gap:18px;
-       box-shadow:0 24px 64px rgba(0,0,0,.7)}
-.icon{font-size:3rem}
-h1{font-size:1.25rem;font-weight:800;text-align:center}
-.btn{display:block;width:100%;border:none;border-radius:14px;
-      padding:16px 20px;font-size:1rem;font-weight:800;text-align:center;
-      cursor:pointer;text-decoration:none;transition:transform .1s;color:#fff}
-.btn:active{transform:scale(.97)}
-.btn-green{background:linear-gradient(135deg,#1a73e8,#34a853);
-            box-shadow:0 6px 24px rgba(26,115,232,.4)}
-.steps{width:100%;background:rgba(255,255,255,.04);border-radius:12px;
-        padding:14px 16px;display:flex;flex-direction:column;gap:8px}
-.step{display:flex;gap:10px;font-size:.8rem;color:rgba(255,255,255,.55);line-height:1.5}
-.hidden{display:none!important}
-#status{font-size:.78rem;color:#fbbf24;text-align:center;min-height:1.4em}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+    <title>Scene — AR التفاعلي</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        html,body{height:100%;background:#08080f;font-family:-apple-system,BlinkMacSystemFont,sans-serif;color:#fff}
+        body{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;min-height:100dvh}
+        .card{width:100%;max-width:380px;background:linear-gradient(145deg,#111120,#1a1a30);
+               border:1px solid rgba(255,255,255,.1);border-radius:24px;padding:28px 22px;
+               display:flex;flex-direction:column;align-items:center;gap:18px;
+               box-shadow:0 24px 64px rgba(0,0,0,.7)}
+        .icon{font-size:3rem}
+        h1{font-size:1.25rem;font-weight:800;text-align:center}
+        .btn{display:block;width:100%;border:none;border-radius:14px;
+              padding:16px 20px;font-size:1rem;font-weight:800;text-align:center;
+              cursor:pointer;text-decoration:none;transition:transform .1s;color:#fff}
+        .btn:active{transform:scale(.97)}
+        .btn-green{background:linear-gradient(135deg,#1a73e8,#34a853);
+                    box-shadow:0 6px 24px rgba(26,115,232,.4)}
+        .steps{width:100%;background:rgba(255,255,255,.04);border-radius:12px;
+                padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+        .step{display:flex;gap:10px;font-size:.8rem;color:rgba(255,255,255,.55);line-height:1.5}
+        .hidden{display:none!important}
+        #status{font-size:.78rem;color:#fbbf24;text-align:center;min-height:1.4em}
+    </style>
 </head>
 <body>
+
 <div class="card">
-  <div class="icon">🌐</div>
-  <h1>عرض الواقع المعزز</h1>
-  <div id="status"></div>
+    <div class="icon">🌐</div>
+    <h1>عرض الواقع المعزز</h1>
+    <div id="status"></div>
 
-  <div id="sec-android" class="hidden" style="width:100%;display:flex;flex-direction:column;gap:12px">
-    <button class="btn btn-green" id="ar-btn" onclick="launchAR()">🤖 عرض في غرفتك (AR)</button>
-    <div class="steps">
-      <div class="step"><span>1.</span><span>اضغط على الزر أعلاه</span></div>
-      <div class="step"><span>2.</span><span>سيفتح مستعرض Scene Viewer</span></div>
-      <div class="step"><span>3.</span><span>وجه الكاميرا نحو الأرض</span></div>
+    <div id="sec-android" class="hidden" style="width:100%;display:flex;flex-direction:column;gap:12px">
+        <button class="btn btn-green" id="ar-btn" onclick="launchAR()">🤖 عرض في غرفتك (AR)</button>
+        <div class="steps">
+            <div class="step"><span>1.</span><span>اضغط على الزر أعلاه</span></div>
+            <div class="step"><span>2.</span><span>سيفتح تطبيق Scene Viewer</span></div>
+            <div class="step"><span>3.</span><span>وجه الكاميرا نحو مساحة فارغة على الأرض</span></div>
+        </div>
     </div>
-  </div>
 
-  <div id="sec-desktop" class="hidden" style="width:100%;text-align:center">
-    <div class="steps">
-      <div class="step"><span>📱</span><span>يرجى فتح الرابط من هاتف أندرويد لتجربة الواقع المعزز.</span></div>
+    <div id="sec-desktop" class="hidden" style="width:100%;text-align:center">
+        <div class="steps">
+            <div class="step"><span>📱</span><span>يرجى فتح هذا الرابط من هاتف أندرويد لتتمكن من استخدام تقنية AR.</span></div>
+        </div>
     </div>
-  </div>
 </div>
 
 <script>
-// تحديد نوع الجهاز
-const ua = navigator.userAgent;
-const isAndroid = /android/i.test(ua);
-const sec = isAndroid ? 'sec-android' : 'sec-desktop';
-document.getElementById(sec).classList.remove('hidden');
+    const ua = navigator.userAgent;
+    const isAndroid = /android/i.test(ua);
+    const sec = isAndroid ? 'sec-android' : 'sec-desktop';
+    document.getElementById(sec).classList.remove('hidden');
 
-function launchAR() {
-  // توليد رابط الملف من المسار الحالي للموقع بدلاً من الـ IP المحلي
-  const currentPath = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
-  const glbUrl = encodeURIComponent(currentPath + "scene.glb");
-  
-  const fbUrl  = encodeURIComponent("https://developers.google.com/ar");
-  const intent =
-    "intent://arvr.google.com/scene-viewer/1.0" +
-    "?file=" + glbUrl +
-    "&mode=ar_preferred" +
-    "&title=Scene" +
-    "#Intent;" +
-    "scheme=https;" +
-    "package=com.google.android.googlequicksearchbox;" +
-    "action=android.intent.action.VIEW;" +
-    "S.browser_fallback_url=" + fbUrl + ";" +
-    "end;";
+    function launchAR() {
+        // توليد رابط الملف من الإنترنت مباشرة (وليس من جهازك الخاص)
+        const currentUrl = window.location.href;
+        const currentPath = currentUrl.substring(0, currentUrl.lastIndexOf('/') + 1);
+        const glbUrl = encodeURIComponent(currentPath + "scene.glb");
+        
+        const fbUrl = encodeURIComponent("https://developers.google.com/ar");
+        const intent =
+            "intent://arvr.google.com/scene-viewer/1.0" +
+            "?file=" + glbUrl +
+            "&mode=ar_preferred" +
+            "&title=تسمية_المجسم" +
+            "#Intent;" +
+            "scheme=https;" +
+            "package=com.google.android.googlequicksearchbox;" +
+            "action=android.intent.action.VIEW;" +
+            "S.browser_fallback_url=" + fbUrl + ";" +
+            "end;";
 
-  document.getElementById('status').textContent = 'جاري تشغيل الواقع المعزز...';
-  
-  // تشغيل رابط الـ Intent الخاص بجوجل
-  window.location = intent;
+        document.getElementById('status').textContent = 'جاري التشغيل...';
+        window.location = intent;
 
-  setTimeout(() => {
-    document.getElementById('status').textContent = '';
-  }, 4000);
-}
+        setTimeout(() => {
+            document.getElementById('status').textContent = '';
+        }, 5000);
+    }
 </script>
+
 </body>
 </html>
