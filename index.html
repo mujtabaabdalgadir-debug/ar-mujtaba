@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Scene — AR</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;background:#08080f;font-family:-apple-system,BlinkMacSystemFont,sans-serif;color:#fff}
+body{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;min-height:100dvh}
+.card{width:100%;max-width:380px;background:linear-gradient(145deg,#111120,#1a1a30);
+       border:1px solid rgba(255,255,255,.1);border-radius:24px;padding:28px 22px;
+       display:flex;flex-direction:column;align-items:center;gap:18px;
+       box-shadow:0 24px 64px rgba(0,0,0,.7)}
+.icon{font-size:3rem}
+h1{font-size:1.25rem;font-weight:800;text-align:center}
+.chips{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+.chip{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);
+       color:rgba(255,255,255,.5);border-radius:20px;padding:4px 10px;font-size:.68rem}
+.btn{display:block;width:100%;border:none;border-radius:14px;
+      padding:16px 20px;font-size:1rem;font-weight:800;text-align:center;
+      cursor:pointer;text-decoration:none;transition:transform .1s;color:#fff}
+.btn:active{transform:scale(.97)}
+.btn-green{background:linear-gradient(135deg,#1a73e8,#34a853);
+            box-shadow:0 6px 24px rgba(26,115,232,.4)}
+.btn-dark{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12)}
+.steps{width:100%;background:rgba(255,255,255,.04);border-radius:12px;
+        padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+.step{display:flex;gap:10px;font-size:.8rem;color:rgba(255,255,255,.55);line-height:1.5}
+.step strong{color:#fff}
+.note{font-size:.7rem;color:rgba(255,255,255,.3);text-align:center;line-height:1.6}
+.hidden{display:none!important}
+#status{font-size:.78rem;color:#fbbf24;text-align:center;min-height:1.4em}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="icon">🌐</div>
+  <h1>Scene</h1>
+  <div class="chips">
+    <span class="chip">📦 14 Meshes</span>
+    <span class="chip">💡 0 Lights</span>
+    <span class="chip">🎨 4 Mats</span>
+  </div>
+  <div id="status"></div>
+
+  <!-- ANDROID -->
+  <div id="sec-android" class="hidden" style="width:100%;display:flex;flex-direction:column;gap:12px">
+    <button class="btn btn-green" id="ar-btn" onclick="launchAR()">🤖 View in Your Room (AR)</button>
+    <div class="steps">
+      <div class="step"><span>1.</span><span>Tap the button above</span></div>
+      <div class="step"><span>2.</span><span><strong>Google Scene Viewer</strong> opens</span></div>
+      <div class="step"><span>3.</span><span>Tap <strong>"View in your space"</strong> and point at floor</span></div>
+    </div>
+    <div class="note">Requires ARCore (Google Play Services for AR)</div>
+  </div>
+
+  <!-- iOS -->
+  <div id="sec-ios" class="hidden" style="width:100%;display:flex;flex-direction:column;gap:12px">
+    <div class="steps">
+      <div class="step"><span>ℹ️</span><span>iPhone AR needs Safari + a USDZ file.</span></div>
+      <div class="step"><span>→</span><span>Upload <strong>scene.glb</strong> to <a href="https://modelviewer.dev/editor" style="color:#818cf8">modelviewer.dev/editor</a> → Export USDZ → Open in Safari</span></div>
+    </div>
+  </div>
+
+  <!-- Desktop -->
+  <div id="sec-desktop" class="hidden" style="width:100%;text-align:center">
+    <div class="steps">
+      <div class="step"><span>📱</span><span>Open this page on your <strong>Android phone</strong> to use AR. Scan the QR on your screen.</span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const ua = navigator.userAgent;
+const isAndroid = /android/i.test(ua);
+const isIOS = /iphone|ipad|ipod/i.test(ua);
+const sec = isAndroid ? 'sec-android' : isIOS ? 'sec-ios' : 'sec-desktop';
+document.getElementById(sec).classList.remove('hidden');
+
+function launchAR() {
+  // Build the intent URL — package must be googlequicksearchbox, NOT ar.core
+  const glbUrl = encodeURIComponent("http://192.168.100.6:8765/scene.glb");
+  const fbUrl  = encodeURIComponent("https://developers.google.com/ar");
+  const intent =
+    "intent://arvr.google.com/scene-viewer/1.0" +
+    "?file=" + glbUrl +
+    "&mode=ar_preferred" +
+    "&title=Scene" +
+    "#Intent;" +
+    "scheme=https;" +
+    "package=com.google.android.googlequicksearchbox;" +
+    "action=android.intent.action.VIEW;" +
+    "S.browser_fallback_url=" + fbUrl + ";" +
+    "end;";
+
+  document.getElementById('status').textContent = 'Launching AR…';
+  document.getElementById('ar-btn').textContent = '⏳ Opening Scene Viewer…';
+
+  // Use window.location — the correct method for Chrome Android intent URLs
+  window.location = intent;
+
+  // Reset button after delay in case user returns
+  setTimeout(() => {
+    document.getElementById('ar-btn').textContent = '🤖 View in Your Room (AR)';
+    document.getElementById('status').textContent = '';
+  }, 4000);
+}
+</script>
+</body>
+</html>
