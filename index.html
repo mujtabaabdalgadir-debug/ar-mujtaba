@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Scene &mdash; AR Viewer</title>
+<meta property="og:title"       content="Scene &mdash; View in AR">
+<meta property="og:description" content="Interactive 3D model. Open on your phone to view in Augmented Reality.">
+<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+html,body { height:100%; background:#08080f;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; color:#fff; overflow:hidden; }
+model-viewer {
+  width:100vw; height:100dvh; --poster-color:#08080f;
+  background:radial-gradient(ellipse at 50% 60%,#1a1040 0%,#08080f 70%);
+}
+#topbar {
+  position:fixed; top:0; left:0; right:0; z-index:20;
+  background:linear-gradient(rgba(0,0,0,.75),transparent);
+  padding:18px 20px 40px; pointer-events:none;
+}
+#topbar h1 { font-size:1rem; font-weight:700; }
+#topbar p  { font-size:.68rem; color:rgba(255,255,255,.4); margin-top:3px; }
+#bottom {
+  position:fixed; bottom:0; left:0; right:0; z-index:20;
+  background:linear-gradient(transparent,rgba(0,0,0,.93) 40%);
+  padding:36px 18px 30px;
+  display:flex; flex-direction:column; align-items:center; gap:10px;
+}
+.btn {
+  width:100%; max-width:360px; border:none; border-radius:16px;
+  padding:16px 22px; font-size:1rem; font-weight:800; cursor:pointer;
+  color:#fff; display:flex; align-items:center; justify-content:center;
+  gap:10px; transition:transform .12s,opacity .12s;
+}
+.btn:active  { transform:scale(.97); opacity:.85; }
+.btn:disabled { opacity:.4; cursor:not-allowed; transform:none; }
+.btn-ar { background:linear-gradient(135deg,#1a73e8,#0f9d58); box-shadow:0 6px 28px rgba(26,115,232,.5); }
+.chips { display:flex; gap:6px; flex-wrap:wrap; justify-content:center; }
+.chip {
+  background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.1);
+  color:rgba(255,255,255,.4); border-radius:20px; padding:4px 12px; font-size:.67rem;
+}
+#hint { font-size:.72rem; color:rgba(255,255,255,.35); text-align:center; min-height:18px; }
+.overlay {
+  display:none; position:fixed; inset:0; z-index:100;
+  background:rgba(0,0,0,.94); flex-direction:column;
+  align-items:center; justify-content:center;
+  padding:32px; gap:18px; text-align:center;
+}
+.overlay.active { display:flex; }
+.overlay h2 { font-size:1.2rem; font-weight:800; }
+.overlay p  { font-size:.85rem; color:rgba(255,255,255,.55); max-width:300px; line-height:1.6; }
+.back-btn {
+  background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.2);
+  color:#fff; border-radius:12px; padding:10px 28px;
+  font-size:.85rem; font-weight:600; cursor:pointer;
+}
+/* Desktop info card */
+#desktop-card {
+  display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
+  z-index:50; background:rgba(15,15,25,.97);
+  border:1px solid rgba(255,255,255,.1); border-radius:24px;
+  padding:36px 32px; max-width:440px; width:90%; text-align:center;
+  box-shadow:0 32px 80px rgba(0,0,0,.8);
+  display:flex; flex-direction:column; align-items:center; gap:18px;
+}
+#desktop-card h2 { font-size:1.25rem; font-weight:800; }
+#desktop-card .sub { font-size:.86rem; color:rgba(255,255,255,.5); max-width:340px; line-height:1.7; }
+.steps-card {
+  background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08);
+  border-radius:14px; padding:18px 20px; width:100%; text-align:left;
+}
+.steps-card h3 {
+  font-size:.7rem; font-weight:700; color:rgba(255,255,255,.3);
+  letter-spacing:.1em; text-transform:uppercase; margin-bottom:12px;
+}
+.step-row { display:flex; gap:12px; margin-bottom:9px; font-size:.82rem; }
+.step-row:last-child { margin:0; }
+.sn {
+  flex-shrink:0; width:22px; height:22px; border-radius:50%;
+  background:rgba(26,115,232,.2); border:1px solid rgba(26,115,232,.4);
+  display:flex; align-items:center; justify-content:center;
+  font-size:.64rem; font-weight:800; color:#93c5fd;
+}
+.step-row p { color:rgba(255,255,255,.55); line-height:1.5; margin:0; }
+.step-row strong { color:#fff; }
+.dismiss {
+  background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.15);
+  color:#fff; border-radius:12px; padding:10px 24px;
+  font-size:.85rem; font-weight:600; cursor:pointer;
+}
+.size-note { font-size:.64rem; color:rgba(255,255,255,.2); }
+</style>
+</head>
+<body>
+
+<!-- 3D viewer (always rendered in background) -->
+<div id="topbar">
+  <h1>&#127758; Scene</h1>
+  <p id="stat">Loading model&hellip;</p>
+</div>
+
+<model-viewer id="mv"
+  alt="Scene 3D model"
+  camera-controls
+  touch-action="pan-y"
+  auto-rotate
+  auto-rotate-delay="1500"
+  rotation-per-second="15deg"
+  exposure="0.75"
+  shadow-intensity="0.6"
+  shadow-softness="1"
+  environment-image="legacy"
+  tone-mapping="neutral"
+  interpolation-decay="150"
+  ar
+  ar-modes="webxr scene-viewer quick-look"
+  ar-scale="auto">
+</model-viewer>
+
+<div id="bottom">
+  <div class="chips" id="chips">
+    <span class="chip">&#128230; 46101 KB</span>
+  </div>
+  <button class="btn btn-ar" id="ar-btn" disabled onclick="launchAR()">
+    &#128247; Loading&hellip;
+  </button>
+  <div id="hint">Loading model&hellip;</div>
+</div>
+
+<!-- AR overlay -->
+<div class="overlay" id="ar-overlay">
+  <h2>&#129302; Opening AR&hellip;</h2>
+  <p id="ar-msg">Launching Augmented Reality&hellip;</p>
+  <button class="back-btn" onclick="document.getElementById('ar-overlay').classList.remove('active')">&#8592; Back</button>
+</div>
+
+<!-- Safari notice (iOS Chrome users) -->
+<div class="overlay" id="safari-overlay">
+  <h2>&#63743; Open in Safari</h2>
+  <p>iPhone AR only works in <strong>Safari</strong>.<br>Tap the share button and choose <strong>"Open in Safari"</strong>.</p>
+  <button class="back-btn" onclick="document.getElementById('safari-overlay').classList.remove('active')">OK</button>
+</div>
+
+<!-- Desktop info card -->
+<div id="desktop-card">
+  <div style="font-size:2.8rem">&#127758;</div>
+  <h2>Scene</h2>
+  <p class="sub">
+    You can rotate the 3D model behind this card.<br>
+    Open this link on your <strong>phone</strong> to experience it in <strong>AR</strong>.
+  </p>
+  <div class="steps-card">
+    <h3>How to view in AR</h3>
+    <div class="step-row"><div class="sn">1</div><p>Share this link to your <strong>Android</strong> or <strong>iPhone</strong></p></div>
+    <div class="step-row"><div class="sn">2</div><p><strong>Android:</strong> open in Chrome &rarr; tap AR button</p></div>
+    <div class="step-row"><div class="sn">3</div><p><strong>iPhone:</strong> open in Safari &rarr; tap AR button</p></div>
+  </div>
+  <p class="size-note">&#128230; 46101 KB &nbsp;|&nbsp; Android + iOS + Desktop &nbsp;|&nbsp; No app needed</p>
+  <button class="dismiss" onclick="document.getElementById('desktop-card').style.display='none'">&#128065;&#65039; View 3D Model</button>
+</div>
+
+<script>
+(function () {
+
+  // ── Compute GLB and USDZ URLs from current page location ──────────
+  // Works on any host worldwide: GitHub Pages, Netlify, local server, etc.
+  var base = window.location.href.replace(/\/[^\/]*$/, '/');
+  var glbUrl  = base + 'scene.glb';
+  var usdzUrl = base + 'scene.usdz';
+
+  // ── Device detection ───────────────────────────────────────────────
+  var ua         = navigator.userAgent;
+  var isAndroid  = /android/i.test(ua);
+  var isIOS      = /iphone|ipad|ipod/i.test(ua);
+  var isSafari   = /safari/i.test(ua) && !/chrome/i.test(ua) && !/crios/i.test(ua) && !/fxios/i.test(ua);
+  var isMobile   = isAndroid || isIOS;
+
+  var mv    = document.getElementById('mv');
+  var hint  = document.getElementById('hint');
+  var arBtn = document.getElementById('ar-btn');
+  var stat  = document.getElementById('stat');
+  var chips = document.getElementById('chips');
+
+  // ── Set model src ──────────────────────────────────────────────────
+  mv.setAttribute('src', glbUrl);
+
+  // iOS: set ios-src to USDZ for AR Quick Look
+  if (isIOS) {
+    mv.setAttribute('ios-src', usdzUrl);
+  }
+
+  // ── Desktop: show info card ────────────────────────────────────────
+  if (!isMobile) {
+    document.getElementById('desktop-card').style.display = 'flex';
+  }
+
+  // ── model-viewer events ────────────────────────────────────────────
+  mv.addEventListener('load', function () {
+    stat.textContent = isMobile ? 'Drag to rotate' : 'Drag to rotate | Scroll to zoom';
+    hint.textContent = isMobile
+      ? 'Tap the button below to view in AR'
+      : 'Open on your phone for AR';
+    arBtn.disabled = false;
+    if (isAndroid) {
+      arBtn.innerHTML = '&#129302; View in Your Room (AR)';
+    } else if (isIOS) {
+      arBtn.innerHTML = '&#63743; View in Your Room (AR)';
+    } else {
+      arBtn.innerHTML = '&#127758; View 3D Model';
+    }
+    chips.innerHTML =
+      '<span class="chip">&#128230; 46101 KB</span>' +
+      (isAndroid ? '<span class="chip">&#129302; AR Ready</span>' : '') +
+      (isIOS     ? '<span class="chip">&#63743; AR Ready</span>'  : '') +
+      (!isMobile ? '<span class="chip">&#128421;&#65039; 3D Desktop</span>' : '');
+  });
+
+  mv.addEventListener('progress', function (e) {
+    var p = Math.round(e.detail.totalProgress * 100);
+    hint.textContent = 'Loading ' + p + '%';
+    stat.textContent = 'Loading ' + p + '%';
+  });
+
+  mv.addEventListener('error', function () {
+    stat.textContent = 'Error loading model';
+    hint.textContent = 'Could not load scene.glb - check the file is uploaded';
+  });
+
+  mv.addEventListener('ar-status', function (e) {
+    if (e.detail.status === 'session-started') hint.textContent = 'Point at a flat surface';
+    if (e.detail.status === 'failed')          hint.textContent = 'AR unavailable on this browser';
+  });
+
+  // ── AR launch ──────────────────────────────────────────────────────
+  window.launchAR = function () {
+
+    if (isAndroid) {
+      // Try WebXR via model-viewer first
+      if (mv.canActivateAR) { mv.activateAR(); return; }
+      // Fallback: Google Scene Viewer via intent://
+      var f = encodeURIComponent(glbUrl);
+      var b = encodeURIComponent('https://developers.google.com/ar');
+      var intent =
+        'intent://arvr.google.com/scene-viewer/1.0' +
+        '?file=' + f +
+        '&mode=ar_preferred' +
+        '&title=' + encodeURIComponent('Scene') +
+        '#Intent;' +
+        'scheme=https;' +
+        'package=com.google.android.googlequicksearchbox;' +
+        'action=android.intent.action.VIEW;' +
+        'S.browser_fallback_url=' + b + ';' +
+        'end;';
+      document.getElementById('ar-overlay').classList.add('active');
+      document.getElementById('ar-msg').textContent = 'Launching Google Scene Viewer...';
+      arBtn.textContent = 'Opening...';
+      window.location = intent;
+      setTimeout(function () {
+        arBtn.innerHTML = '&#129302; View in Your Room (AR)';
+        document.getElementById('ar-overlay').classList.remove('active');
+      }, 4000);
+
+    } else if (isIOS) {
+      if (!isSafari) {
+        // Not Safari - show instructions
+        document.getElementById('safari-overlay').classList.add('active');
+        return;
+      }
+      // Safari: model-viewer AR Quick Look (uses ios-src = USDZ)
+      if (mv.canActivateAR) {
+        mv.activateAR();
+      } else {
+        hint.textContent = 'AR Quick Look not available - update iOS';
+      }
+
+    } else {
+      // Desktop: dismiss card and let them see the 3D model
+      document.getElementById('desktop-card').style.display = 'none';
+      hint.textContent = 'Open this link on your phone for AR';
+    }
+  };
+
+})();
+</script>
+</body>
+</html>
